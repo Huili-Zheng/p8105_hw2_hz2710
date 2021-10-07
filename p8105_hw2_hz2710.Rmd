@@ -137,6 +137,7 @@ Join the datasets by merging snp into pols, and merging unemployment into the re
 
 ```{r}
 result_df = left_join(left_join(snp_df,pols_month_df,by = c("year","month")), unemployment_df, by = c("month","year"))
+
 ```
 
 The pols-month dataset contains the number of governors, senators, representatives from republican and democratic parties from 1947 to 2015 and specifies the party the presidents were on the associated date.
