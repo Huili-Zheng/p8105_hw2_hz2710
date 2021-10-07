@@ -9,7 +9,16 @@ output: github_document
 
 library(tidyverse)
 library(readxl)
+library(dplyr)
 library(lubridate)
+library(ggplot2)
+library(ggridges)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
 ```
 
 
@@ -62,7 +71,7 @@ pre_df =
 The number of observations in Mr.Trash Wheel dataset is `r nrow(wheel_df)` and the number of observations in precipitation data is `r nrow(pre_df)`. The key variables of Mr.Trash Wheel dataset include "weight_tons" and "volume_cubic_yards". The key variables of precipitation data are "month" and "total". The total precipitation in 2018 is `r sum(pull(pre2018_df,total))`. The median number of sports balls in a dumpster in 2019 is `r median(pull(filter(wheel_df,year == 2019), sports_balls))`.
 
 
-Problem 2
+## Problem 2
 This problem uses the FiveThirtyEight data; these data were gathered to create the interactive graphic on this page. In particular, we’ll use the data in pols-month.csv, unemployment.csv, and snp.csv. Our goal is to merge these into a single data frame using year and month as keys across datasets.
 
 First, clean the data in pols-month.csv. 
@@ -134,5 +143,89 @@ The pols-month dataset contains the number of governors, senators, representativ
 The snp dataset contains the closing value of the S&P stock index on the associated date. 
 The unemployment dataset contains the every month unemployment rate in the associated year.
 The dimension of result dataset is `r nrow(result_df)` rows and `r ncol(result_df)` columns. The range of years is `r min(pull(result_df, year)) - max(pull(result_df, year))`, the names of key variables are "year" and "month".
+
+## Problem3
+This problem uses data from NYC Open data on the popularity of baby names.
+
+Load and tidy the data. Address the problems of the names of a categorical predictor and the case structure of string variables.
+```{r}
+pop_name = 
+  read_csv("data/Popular_Baby_Names.csv") %>%
+  janitor::clean_names() %>%
+  mutate(
+    childs_first_name = str_to_lower(childs_first_name),
+    gender = str_to_lower(gender),
+    ethnicity = str_to_lower(ethnicity)
+  ) %>%
+  distinct()
+
+count(pop_name, ethnicity)
+pop_name = pop_name %>%
+  mutate(
+    childs_first_name = str_to_title(childs_first_name),
+    ethnicity = case_when(
+      ethnicity == "asian and paci" ~ "asian and pacific islander",
+      ethnicity == "black non hisp" ~ "black non hispanic",
+      ethnicity == "white non hisp" ~ "white non hispanic",
+      ethnicity == "asian and pacific islander" ~ "asian and pacific islander",
+      ethnicity == "black non hispanic" ~ "black non hispanic",
+      ethnicity == "white non hispanic" ~ "white non hispanic",
+      ethnicity == "hispanic" ~ "hispanic")
+  )
+```
+
+Produce a table showing the rank in popularity of the name “Olivia” as a female baby name over time.
+```{r}
+olivia_df = 
+  pop_name %>%
+  filter(childs_first_name == "Olivia", gender == "female") %>%
+  select(year_of_birth, ethnicity,rank) %>%
+  pivot_wider(names_from = year_of_birth, values_from = rank) %>%
+  knitr::kable()
+
+olivia_df
+```
+
+Investigate the most popular name over time among male babies.
+```{r}
+## find the most popular male name
+male_name_df = 
+  pop_name %>% 
+  filter(gender == "male") %>%
+  group_by(childs_first_name) %>%
+  summarise(frequency = sum(count)) %>%
+  arrange(desc(frequency))
+
+## the most popular name among male is ethan.
+ethan_df = 
+  pop_name %>%
+  filter(childs_first_name == "Ethan", gender == "male") %>%
+  select(year_of_birth, ethnicity,rank) %>%
+  pivot_wider(names_from = year_of_birth, values_from = rank) %>%
+  knitr::kable()
+
+ethan_df
+```
+
+For male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis).
+
+```{r}
+M_W_2016 = 
+  pop_name %>%
+  filter(gender == "male",  year_of_birth == 2016, ethnicity == "white non hispanic")
+gg_rank_count = 
+  M_W_2016 %>%
+  ggplot(aes(x = rank, y = count)) +
+  geom_point() +
+  labs(
+    title = "Baby names popularity",
+    x = "Baby names rank",
+    y = "Baby names count"
+  ) 
+
+gg_rank_count
+
+ggsave("M_W_2016.jpg",gg_rank_count,device = "jpg")
+```
 
 
