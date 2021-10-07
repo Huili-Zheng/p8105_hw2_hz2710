@@ -1,0 +1,61 @@
+---
+title: "p8105_hw2_hz2710"
+author: "Huili Zheng"
+date: "10/7/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(readxl)
+```
+
+
+## Problem 1
+
+
+Read and clean the Mr. Trash Wheel sheet:
+
+```{r}
+wheel_df = 
+  read_excel("data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",range = "A2:N406" ) %>%
+  janitor::clean_names() %>%
+  drop_na("dumpster") %>%
+  mutate(
+    sports_balls = round(sports_balls)
+  ) 
+```
+
+
+Read and clean precipitation data for 2018 and 2019. 
+
+```{r}
+pre2018_df = 
+  read_excel("data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+             sheet = "2018 Precipitation",
+             range = "A2:B14") %>%
+  janitor::clean_names() %>%
+  drop_na("total") %>%
+  mutate(
+    year = 2018
+  )
+pre2019_df = 
+  read_excel("data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+             sheet = "2019 Precipitation",
+             range = "A2:B14") %>%
+  janitor::clean_names() %>%
+  drop_na("total") %>%
+  mutate(
+    year = 2019
+  )
+
+pre_df = 
+  left_join(pre2018_df, pre2019_df, by = "month") %>%
+  mutate(
+    mouth = month.name[month]
+  )
+```
+
+
+The number of observations in Mr.Trash Wheel dataset is `r nrow(wheel_df)` and the number of observations in precipitation data is `r nrow(pre_df)`. The key variables of Mr.Trash Wheel dataset include "weight_tons" and "volume_cubic_yards". The key variables of precipitation data are "month" and "total". The total precipitation in 2018 is `r sum(pull(pre2018_df,total))`. The median number of sports balls in a dumpster in 2019 is `r median(pull(filter(wheel_df,year == 2019), sports_balls))`.
