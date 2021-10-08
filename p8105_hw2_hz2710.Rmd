@@ -29,7 +29,7 @@ Read and clean the Mr. Trash Wheel sheet:
 
 ```{r}
 wheel_df = 
-  read_excel("data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",range = "A2:N406" ) %>%
+  read_excel("data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",range = "A2:N535" ) %>%
   janitor::clean_names() %>%
   drop_na("dumpster") %>%
   mutate(
